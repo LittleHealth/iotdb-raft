@@ -852,7 +852,7 @@ public class IoTDBConfig {
   private int pageCacheSizeInSchemaFile = 1024;
 
   /** Internal address for data node */
-  private String internalAddress = "127.0.0.1";
+  private String internalAddress = "0.0.0.0";
 
   /** Internal port for coordinator */
   private int internalPort = 9003;
@@ -909,6 +909,15 @@ public class IoTDBConfig {
 
   /** Thrift socket and connection timeout between data node and config node. */
   private int connectionTimeoutInMS = (int) TimeUnit.SECONDS.toMillis(20);
+
+  /** the maximum number of clients that can be applied for a node's InternalService */
+  private int maxConnectionForInternalService = 100;
+
+  /**
+   * the maximum number of clients that can be idle for a node's InternalService. When the number of
+   * idle clients on a node exceeds this number, newly returned clients will be released
+   */
+  private int coreConnectionForInternalService = 100;
 
   /**
    * ClientManager will have so many selector threads (TAsyncClientManager) to distribute to its
@@ -975,11 +984,12 @@ public class IoTDBConfig {
   private String readConsistencyLevel = "strong";
 
   /** Maximum execution time of a DriverTask */
-  /** Maximum execution time of a DriverTask */
   private int driverTaskExecutionTimeSliceInMs = 100;
 
   /** Maximum size of wal buffer used in MultiLeader consensus. Unit: byte */
   private long throttleThreshold = 50 * 1024 * 1024 * 1024L;
+
+  private long RatisConsensusLogAppenderBufferSizeMax = 4 * 1024 * 1024L;
 
   IoTDBConfig() {}
 
@@ -2903,6 +2913,22 @@ public class IoTDBConfig {
     this.connectionTimeoutInMS = connectionTimeoutInMS;
   }
 
+  public int getMaxConnectionForInternalService() {
+    return maxConnectionForInternalService;
+  }
+
+  public void setMaxConnectionForInternalService(int maxConnectionForInternalService) {
+    this.maxConnectionForInternalService = maxConnectionForInternalService;
+  }
+
+  public int getCoreConnectionForInternalService() {
+    return coreConnectionForInternalService;
+  }
+
+  public void setCoreConnectionForInternalService(int coreConnectionForInternalService) {
+    this.coreConnectionForInternalService = coreConnectionForInternalService;
+  }
+
   public int getSelectorNumOfClientManager() {
     return selectorNumOfClientManager;
   }
@@ -3113,6 +3139,15 @@ public class IoTDBConfig {
 
   public void setThrottleThreshold(long throttleThreshold) {
     this.throttleThreshold = throttleThreshold;
+  }
+
+  public long getRatisConsensusLogAppenderBufferSizeMax() {
+    return RatisConsensusLogAppenderBufferSizeMax;
+  }
+
+  public void setRatisConsensusLogAppenderBufferSizeMax(
+      long ratisConsensusLogAppenderBufferSizeMax) {
+    RatisConsensusLogAppenderBufferSizeMax = ratisConsensusLogAppenderBufferSizeMax;
   }
 
   public String getConfigMessage() {

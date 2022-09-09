@@ -24,6 +24,7 @@ import org.apache.iotdb.commons.conf.IoTDBConstant;
 import org.apache.iotdb.commons.exception.BadNodeUrlException;
 import org.apache.iotdb.commons.utils.NodeUrlUtils;
 import org.apache.iotdb.confignode.rpc.thrift.TGlobalConfig;
+import org.apache.iotdb.confignode.rpc.thrift.TRatisConfig;
 import org.apache.iotdb.db.conf.directories.DirectoryManager;
 import org.apache.iotdb.db.engine.StorageEngine;
 import org.apache.iotdb.db.engine.compaction.constant.CompactionPriority;
@@ -238,6 +239,18 @@ public class IoTDBDescriptor {
         Integer.parseInt(
             properties.getProperty(
                 "connection_timeout_ms", String.valueOf(conf.getConnectionTimeoutInMS()))));
+
+    conf.setMaxConnectionForInternalService(
+        Integer.parseInt(
+            properties.getProperty(
+                "max_connection_for_internal_service",
+                String.valueOf(conf.getMaxConnectionForInternalService()))));
+
+    conf.setCoreConnectionForInternalService(
+        Integer.parseInt(
+            properties.getProperty(
+                "core_connection_for_internal_service",
+                String.valueOf(conf.getCoreConnectionForInternalService()))));
 
     conf.setSelectorNumOfClientManager(
         Integer.parseInt(
@@ -1862,6 +1875,10 @@ public class IoTDBDescriptor {
     conf.setSeriesPartitionSlotNum(globalConfig.getSeriesPartitionSlotNum());
     conf.setPartitionInterval(globalConfig.timePartitionInterval);
     conf.setReadConsistencyLevel(globalConfig.getReadConsistencyLevel());
+  }
+
+  public void loadRatisConfig(TRatisConfig ratisConfig) {
+    conf.setRatisConsensusLogAppenderBufferSizeMax(ratisConfig.getAppenderBufferSize());
   }
 
   public void initClusterSchemaMemoryAllocate() {
