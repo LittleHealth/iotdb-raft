@@ -85,5 +85,6 @@ public class BackBooleanTVList extends QuickBooleanTVList implements BackwardSor
       PrimitiveArrayManager.release(dataArray);
     }
     tmpValues.clear();
+    tmpLength = 0;
   }
 }

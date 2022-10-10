@@ -89,5 +89,6 @@ public class BackAlignedTVList extends QuickAlignedTVList implements BackwardSor
       PrimitiveArrayManager.release(dataArray);
     }
     tmpIndices.clear();
+    tmpLength = 0;
   }
 }

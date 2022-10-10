@@ -40,7 +40,7 @@ public interface BackwardSort extends QuickSort {
 
   default void backwardSort(List<long[]> timestamps, int rowCount) {
     int block_size = setBlockLength(timestamps, 1);
-    // System.out.printf("rowCount=%d, block_size=%d\n",rowCount, block_size);
+    System.out.printf("rowCount=%d, block_size=%d\n",rowCount, block_size);
     int B = rowCount / block_size + 1;
     sortBlock((B - 1) * block_size, rowCount - 1);
     for (int i = B - 2; i >= 0; i--) {
@@ -129,6 +129,7 @@ public interface BackwardSort extends QuickSort {
    * @param hi
    */
   default void sortBlock(int lo, int hi) {
+    // System.out.printf("lo=%d, hi=%d\n", lo, hi);
     qsort(lo, hi);
   }
 }

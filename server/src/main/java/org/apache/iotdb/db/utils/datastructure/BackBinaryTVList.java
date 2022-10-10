@@ -86,5 +86,6 @@ public class BackBinaryTVList extends QuickBinaryTVList implements BackwardSort 
       PrimitiveArrayManager.release(dataArray);
     }
     tmpValues.clear();
+    tmpLength = 0;
   }
 }

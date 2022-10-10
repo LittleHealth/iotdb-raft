@@ -85,5 +85,6 @@ public class BackLongTVList extends QuickLongTVList implements BackwardSort {
       PrimitiveArrayManager.release(dataArray);
     }
     tmpValues.clear();
+    tmpLength = 0;
   }
 }

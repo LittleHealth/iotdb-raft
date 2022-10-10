@@ -85,5 +85,6 @@ public class BackDoubleTVList extends QuickDoubleTVList implements BackwardSort 
       PrimitiveArrayManager.release(dataArray);
     }
     tmpValues.clear();
+    tmpLength = 0;
   }
 }
