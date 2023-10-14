@@ -36,7 +36,6 @@ import org.apache.iotdb.db.storageengine.dataregion.modification.Modification;
 import org.apache.iotdb.db.storageengine.dataregion.wal.buffer.IWALByteBufferView;
 import org.apache.iotdb.db.storageengine.dataregion.wal.utils.WALWriteUtils;
 import org.apache.iotdb.db.utils.MemUtils;
-import org.apache.iotdb.db.utils.datastructure.TVList;
 import org.apache.iotdb.metrics.utils.MetricLevel;
 import org.apache.iotdb.tsfile.file.metadata.enums.TSDataType;
 import org.apache.iotdb.tsfile.utils.Pair;
@@ -104,12 +103,14 @@ public abstract class AbstractMemTable implements IMemTable {
 
   protected AbstractMemTable(Map<IDeviceID, IWritableMemChunkGroup> memTableMap) {
     this.memTableMap = memTableMap;
-    for(IDeviceID key: memTableMap.keySet()){
-      Map<String, IWritableMemChunk> memChunkMap =  memTableMap.get(key).getMemChunkMap();
-      for(String schema : memChunkMap.keySet()){
+    for (IDeviceID key : memTableMap.keySet()) {
+      Map<String, IWritableMemChunk> memChunkMap = memTableMap.get(key).getMemChunkMap();
+      for (String schema : memChunkMap.keySet()) {
         IWritableMemChunk memChunk = memChunkMap.get(schema);
         totalPointsNum += memChunk.getTVList().rowCount();
-        memSize += (long) memChunk.getTVList().rowCount() * memChunk.getSchema().getType().getDataTypeSize();
+        memSize +=
+            (long) memChunk.getTVList().rowCount()
+                * memChunk.getSchema().getType().getDataTypeSize();
       }
     }
   }

@@ -474,7 +474,7 @@ public class AlignedWritableMemChunk implements IWritableMemChunk {
 
   @Override
   public IWritableMemChunk divide() {
-    return null;
+    return new AlignedWritableMemChunk(schemaList, (AlignedTVList) list.divide());
   }
 
   @Override

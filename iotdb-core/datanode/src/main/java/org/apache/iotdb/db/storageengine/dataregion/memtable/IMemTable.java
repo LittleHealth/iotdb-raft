@@ -132,11 +132,8 @@ public interface IMemTable extends WALEntryValue {
    */
   void delete(PartialPath path, PartialPath devicePath, long startTimestamp, long endTimestamp);
 
-  /**
-   * divide the memtable into the topk and regular ones
-   * @ return the topk memtable.
-   */
-   IMemTable divide();
+  /** divide the memtable into the topk and regular ones @ return the topk memtable. */
+  IMemTable divide();
   /**
    * Make a copy of this MemTable.
    *

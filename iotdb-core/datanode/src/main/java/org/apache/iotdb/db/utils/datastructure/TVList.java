@@ -219,8 +219,9 @@ public abstract class TVList implements WALEntryValue {
     throw new UnsupportedOperationException(ERR_DATATYPE_NOT_CONSISTENT);
   }
 
-
-  public TVList divide() {throw new UnsupportedOperationException(ERR_DATATYPE_NOT_CONSISTENT); }
+  public TVList divide() {
+    throw new UnsupportedOperationException(ERR_DATATYPE_NOT_CONSISTENT);
+  }
 
   public Object getAlignedValue(int index) {
     throw new UnsupportedOperationException(ERR_DATATYPE_NOT_CONSISTENT);

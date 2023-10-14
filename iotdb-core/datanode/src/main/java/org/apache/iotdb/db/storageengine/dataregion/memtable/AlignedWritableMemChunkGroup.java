@@ -150,7 +150,9 @@ public class AlignedWritableMemChunkGroup implements IWritableMemChunkGroup {
 
   @Override
   public IWritableMemChunkGroup divide() {
-    return null;
+    AlignedWritableMemChunkGroup topkMemChunkGroup = new AlignedWritableMemChunkGroup();
+    topkMemChunkGroup.memChunk = (AlignedWritableMemChunk) memChunk.divide();
+    return topkMemChunkGroup;
   }
 
   public AlignedWritableMemChunk getAlignedMemChunk() {

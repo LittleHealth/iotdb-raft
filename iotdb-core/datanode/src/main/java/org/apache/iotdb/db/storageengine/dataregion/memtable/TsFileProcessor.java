@@ -322,11 +322,10 @@ public class TsFileProcessor {
   }
 
   private void createNewWorkingMemTable(IMemTable tobeFlushed) throws WriteProcessException {
-    if(WAITING_SIZE != 0){
+    if (WAITING_SIZE != 0) {
       workMemTable = tobeFlushed.divide();
       walNode.onMemTableCreated(workMemTable, tsFileResource.getTsFilePath());
-    }
-    else {
+    } else {
       createNewWorkingMemTable();
     }
   }
@@ -1061,7 +1060,7 @@ public class TsFileProcessor {
       try {
         createNewWorkingMemTable(tobeFlushed);
       } catch (WriteProcessException e) {
-          throw new RuntimeException(e);
+        throw new RuntimeException(e);
       }
       flushingMemTables.addLast(tobeFlushed);
     }

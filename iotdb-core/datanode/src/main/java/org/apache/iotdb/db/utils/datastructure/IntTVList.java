@@ -76,7 +76,7 @@ public abstract class IntTVList extends TVList {
   @Override
   public void putInt(long timestamp, int value) {
     checkExpansion();
-    if(memtableTopKSize == 0){
+    if (memtableTopKSize == 0) {
       int arrayIndex = rowCount / ARRAY_SIZE;
       int elementIndex = rowCount % ARRAY_SIZE;
       maxTime = Math.max(maxTime, timestamp);
@@ -86,8 +86,7 @@ public abstract class IntTVList extends TVList {
       if (sorted && rowCount > 1 && timestamp < getTime(rowCount - 2)) {
         sorted = false;
       }
-    }
-    else {
+    } else {
       int arrayIndex;
       int elementIndex;
       int waitlen = Math.min(rowCount, memtableTopKSize);
@@ -168,7 +167,7 @@ public abstract class IntTVList extends TVList {
   }
 
   @Override
-  public TVList divide(){
+  public TVList divide() {
     assert rowCount > memtableTopKSize;
     assert memtableTopKSize >= MEMTABLE_TOPK_SIZE;
     IntTVList topkTVList = IntTVList.newList();
@@ -177,15 +176,14 @@ public abstract class IntTVList extends TVList {
       topkTVList.timestamps.add(timestamps.get(i));
       topkTVList.values.add(values.get(i));
     }
-    for(int i = rowCount / ARRAY_SIZE; i >= truncatedIndex + 1; i--){
-      timestamps.remove(timestamps.size()-1);
-      values.remove(values.size()-1);
+    for (int i = rowCount / ARRAY_SIZE; i >= truncatedIndex + 1; i--) {
+      timestamps.remove(timestamps.size() - 1);
+      values.remove(values.size() - 1);
     }
     rowCount = truncatedIndex * ARRAY_SIZE;
     topKTime = timestamps.get(truncatedIndex - 1)[ARRAY_SIZE - 1];
     return topkTVList;
-}
-
+  }
 
   @Override
   public TimeValuePair getTimeValuePair(int index) {
