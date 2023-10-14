@@ -83,6 +83,8 @@ public interface IWritableMemChunk extends WALEntryValue {
 
   IMeasurementSchema getSchema();
 
+  void setSchema(IMeasurementSchema s);
+
   /**
    * served for read requests.
    *
@@ -128,6 +130,10 @@ public interface IWritableMemChunk extends WALEntryValue {
     return Long.MAX_VALUE;
   }
 
+  default long getTopKTime() {
+    return Long.MAX_VALUE;
+  }
+
   /** @return how many points are deleted */
   int delete(long lowerBound, long upperBound);
 
@@ -140,6 +146,8 @@ public interface IWritableMemChunk extends WALEntryValue {
   long getFirstPoint();
 
   long getLastPoint();
+
+  IWritableMemChunk divide();
 
   boolean isEmpty();
 }
