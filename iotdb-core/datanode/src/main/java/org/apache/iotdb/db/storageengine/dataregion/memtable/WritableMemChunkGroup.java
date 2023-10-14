@@ -173,6 +173,25 @@ public class WritableMemChunkGroup implements IWritableMemChunkGroup {
   }
 
   @Override
+  public long getTopKTime() {
+    long maxTime = Long.MIN_VALUE;
+    for (IWritableMemChunk memChunk : memChunkMap.values()) {
+      maxTime = Math.max(maxTime, memChunk.getTopKTime());
+    }
+    return maxTime;
+  }
+
+  @Override
+  public IWritableMemChunkGroup divide() {
+    WritableMemChunkGroup topkMemChunkGroup = new WritableMemChunkGroup();
+    for (String key : memChunkMap.keySet()) {
+      IWritableMemChunk topkMemChunk = memChunkMap.get(key).divide();
+      topkMemChunkGroup.memChunkMap.put(key, topkMemChunk);
+    }
+    return topkMemChunkGroup;
+  }
+
+  @Override
   public int serializedSize() {
     int size = 0;
     size += Integer.BYTES;

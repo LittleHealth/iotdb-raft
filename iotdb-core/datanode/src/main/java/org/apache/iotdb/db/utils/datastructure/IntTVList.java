@@ -34,8 +34,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.apache.iotdb.db.storageengine.rescon.memory.PrimitiveArrayManager.ARRAY_SIZE;
-import static org.apache.iotdb.db.storageengine.rescon.memory.PrimitiveArrayManager.TVLIST_SORT_ALGORITHM;
+import static org.apache.iotdb.db.storageengine.rescon.memory.PrimitiveArrayManager.*;
 
 public abstract class IntTVList extends TVList {
   // list of primitive array, add 1 when expanded -> int primitive array
@@ -77,14 +76,59 @@ public abstract class IntTVList extends TVList {
   @Override
   public void putInt(long timestamp, int value) {
     checkExpansion();
-    int arrayIndex = rowCount / ARRAY_SIZE;
-    int elementIndex = rowCount % ARRAY_SIZE;
-    maxTime = Math.max(maxTime, timestamp);
-    timestamps.get(arrayIndex)[elementIndex] = timestamp;
-    values.get(arrayIndex)[elementIndex] = value;
-    rowCount++;
-    if (sorted && rowCount > 1 && timestamp < getTime(rowCount - 2)) {
-      sorted = false;
+    if(waitSize == 0){
+      int arrayIndex = rowCount / ARRAY_SIZE;
+      int elementIndex = rowCount % ARRAY_SIZE;
+      maxTime = Math.max(maxTime, timestamp);
+      timestamps.get(arrayIndex)[elementIndex] = timestamp;
+      values.get(arrayIndex)[elementIndex] = value;
+      rowCount++;
+      if (sorted && rowCount > 1 && timestamp < getTime(rowCount - 2)) {
+        sorted = false;
+      }
+    }
+    else {
+      int arrayIndex;
+      int elementIndex;
+      int waitlen = Math.min(rowCount, waitSize);
+      int tempRowCount = rowCount - 1; // 记录向前比较的截止位置
+      while (waitlen > 0) {
+        waitlen--;
+        arrayIndex = tempRowCount / ARRAY_SIZE;
+        elementIndex = tempRowCount % ARRAY_SIZE;
+        if (timestamps.get(arrayIndex)[elementIndex] > timestamp) {
+          tempRowCount--;
+          continue;
+        }
+        break;
+      }
+      arrayIndex = rowCount / ARRAY_SIZE;
+      elementIndex = rowCount % ARRAY_SIZE;
+      int arrayIndexLeft = (rowCount - 1) / ARRAY_SIZE;
+      int elementIndexLeft = (rowCount - 1) % ARRAY_SIZE;
+      for (int i = rowCount - 1; i > tempRowCount; i--) {
+        timestamps.get(arrayIndex)[elementIndex] = timestamps.get(arrayIndexLeft)[elementIndexLeft];
+        values.get(arrayIndex)[elementIndex] = values.get(arrayIndexLeft)[elementIndexLeft];
+        arrayIndex = arrayIndexLeft;
+        elementIndex = elementIndexLeft;
+        arrayIndexLeft = (i - 1) / ARRAY_SIZE;
+        elementIndexLeft = (i - 1) % ARRAY_SIZE;
+        sortCount++;
+      }
+      arrayIndex = (tempRowCount + 1) / ARRAY_SIZE;
+      elementIndex = (tempRowCount + 1) % ARRAY_SIZE;
+      maxTime = Math.max(maxTime, timestamp);
+      timestamps.get(arrayIndex)[elementIndex] = timestamp;
+      values.get(arrayIndex)[elementIndex] = value;
+      if (rowCount > waitSize) {
+        arrayIndex = (rowCount - waitSize - 1) / ARRAY_SIZE;
+        elementIndex = (rowCount - waitSize - 1) % ARRAY_SIZE;
+        topKTime = Math.max(topKTime, timestamps.get(arrayIndex)[elementIndex]);
+      }
+      rowCount++;
+      if (sorted && rowCount > 1 && waitlen == 0) {
+        sorted = false;
+      }
     }
   }
 
@@ -122,6 +166,26 @@ public abstract class IntTVList extends TVList {
   protected void expandValues() {
     values.add((int[]) getPrimitiveArraysByType(TSDataType.INT32));
   }
+
+  @Override
+  public TVList divide(){
+    assert rowCount > waitSize;
+    assert waitSize >= WAITING_SIZE;
+    IntTVList topkTVList = IntTVList.newList();
+    int truncatedIndex = (rowCount - waitSize + ARRAY_SIZE - 1) / ARRAY_SIZE;
+    for (int i = truncatedIndex + 1; i <= rowCount / ARRAY_SIZE; i++) {
+      topkTVList.timestamps.add(timestamps.get(i));
+      topkTVList.values.add(values.get(i));
+    }
+    for(int i = rowCount / ARRAY_SIZE; i >= truncatedIndex + 1; i--){
+      timestamps.remove(timestamps.size()-1);
+      values.remove(values.size()-1);
+    }
+    rowCount = truncatedIndex * ARRAY_SIZE;
+    topKTime = timestamps.get(truncatedIndex - 1)[ARRAY_SIZE - 1];
+    return topkTVList;
+}
+
 
   @Override
   public TimeValuePair getTimeValuePair(int index) {

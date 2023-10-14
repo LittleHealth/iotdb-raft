@@ -49,7 +49,13 @@ public class WritableMemChunk implements IWritableMemChunk {
     this.list = TVList.newList(schema.getType());
   }
 
-  private WritableMemChunk() {}
+  public WritableMemChunk(IMeasurementSchema schema, TVList ls) {
+    this.schema = schema;
+    this.list = ls;
+  }
+
+  // private WritableMemChunk() {}
+  public WritableMemChunk() {}
 
   @Override
   public boolean writeWithFlushCheck(long insertTime, Object objectValue) {
@@ -246,8 +252,18 @@ public class WritableMemChunk implements IWritableMemChunk {
   }
 
   @Override
+  public void setSchema(IMeasurementSchema s) {
+    this.schema = s;
+  }
+
+  @Override
   public long getMaxTime() {
     return list.getMaxTime();
+  }
+
+  @Override
+  public long getTopKTime() {
+    return list.getTopKTime();
   }
 
   @Override
@@ -266,6 +282,11 @@ public class WritableMemChunk implements IWritableMemChunk {
     return getSortedTvListForQuery()
         .getTimeValuePair(getSortedTvListForQuery().rowCount() - 1)
         .getTimestamp();
+  }
+
+  @Override
+  public IWritableMemChunk divide() {
+    return new WritableMemChunk(this.schema, list.divide());
   }
 
   @Override

@@ -55,9 +55,12 @@ public abstract class TVList implements WALEntryValue {
   // index relation: arrayIndex -> elementIndex
   protected List<long[]> timestamps;
   protected int rowCount;
+  protected int waitSize;
 
   protected boolean sorted = true;
   protected long maxTime;
+  protected long topKTime;
+  protected int sortCount;
   // record reference count of this tv list
   // currently this reference will only be increase because we can't know when to decrease it
   protected AtomicInteger referenceCount;
@@ -66,7 +69,9 @@ public abstract class TVList implements WALEntryValue {
   protected TVList() {
     timestamps = new ArrayList<>();
     rowCount = 0;
+    sortCount = 0;
     maxTime = Long.MIN_VALUE;
+    topKTime = Long.MIN_VALUE;
     referenceCount = new AtomicInteger();
   }
 
@@ -214,6 +219,9 @@ public abstract class TVList implements WALEntryValue {
     throw new UnsupportedOperationException(ERR_DATATYPE_NOT_CONSISTENT);
   }
 
+
+  public TVList divide() {throw new UnsupportedOperationException(ERR_DATATYPE_NOT_CONSISTENT); }
+
   public Object getAlignedValue(int index) {
     throw new UnsupportedOperationException(ERR_DATATYPE_NOT_CONSISTENT);
   }
@@ -229,6 +237,10 @@ public abstract class TVList implements WALEntryValue {
 
   public long getMaxTime() {
     return maxTime;
+  }
+
+  public long getTopKTime() {
+    return topKTime;
   }
 
   public long getVersion() {
