@@ -252,8 +252,16 @@ public class AlignedWritableMemChunk implements IWritableMemChunk {
   }
 
   @Override
+  public void setSchema(IMeasurementSchema s) {}
+
+  @Override
   public long getMaxTime() {
     return list.getMaxTime();
+  }
+
+  @Override
+  public long getTopKTime() {
+    return list.getTopKTime();
   }
 
   @Override
@@ -462,6 +470,11 @@ public class AlignedWritableMemChunk implements IWritableMemChunk {
     return getSortedTvListForQuery()
         .getTimeValuePair(getSortedTvListForQuery().rowCount() - 1)
         .getTimestamp();
+  }
+
+  @Override
+  public IWritableMemChunk divide() {
+    return null;
   }
 
   @Override
