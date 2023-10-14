@@ -107,6 +107,8 @@ public class TsFileProcessor {
   /** whether it's enable mem control. */
   private final boolean enableMemControl = config.isEnableMemControl();
 
+  private final int WAITING_SIZE = config.getSeqMemtableTopKSize();
+
   /** database info for mem control. */
   private final DataRegionInfo dataRegionInfo;
   /** tsfile processor info for mem control. */
@@ -114,6 +116,8 @@ public class TsFileProcessor {
 
   /** sync this object in read() and asyncTryToFlush(). */
   private final ConcurrentLinkedDeque<IMemTable> flushingMemTables = new ConcurrentLinkedDeque<>();
+  // private final ConcurrentLinkedDeque<IMemTable> waitingMemTables = new
+  // ConcurrentLinkedDeque<>();
 
   /** modification to memtable mapping. */
   private final List<Pair<Modification, IMemTable>> modsToMemtable = new ArrayList<>();
@@ -121,11 +125,16 @@ public class TsFileProcessor {
   /** writer for restore tsfile and flushing. */
   private RestorableTsFileIOWriter writer;
 
+  private RestorableTsFileIOWriter writerTemp;
+
   /** tsfile resource for index this tsfile. */
   private final TsFileResource tsFileResource;
 
   /** time range index to indicate this processor belongs to which time range */
   private long timeRangeId;
+
+  private long starttime;
+  private long endtime;
   /**
    * Whether the processor is in the queue of the FlushManager or being flushed by a flush thread.
    */
@@ -174,6 +183,8 @@ public class TsFileProcessor {
 
   private static final PerformanceOverviewMetrics PERFORMANCE_OVERVIEW_METRICS =
       PerformanceOverviewMetrics.getInstance();
+
+  private File tsfileTemp;
 
   @SuppressWarnings("squid:S107")
   public TsFileProcessor(
@@ -308,6 +319,16 @@ public class TsFileProcessor {
   private void createNewWorkingMemTable() throws WriteProcessException {
     workMemTable = MemTableManager.getInstance().getAvailableMemTable(storageGroupName);
     walNode.onMemTableCreated(workMemTable, tsFileResource.getTsFilePath());
+  }
+
+  private void createNewWorkingMemTable(IMemTable tobeFlushed) throws WriteProcessException {
+    if(WAITING_SIZE != 0){
+      workMemTable = tobeFlushed.divide();
+      walNode.onMemTableCreated(workMemTable, tsFileResource.getTsFilePath());
+    }
+    else {
+      createNewWorkingMemTable();
+    }
   }
 
   /**
@@ -1007,7 +1028,9 @@ public class TsFileProcessor {
   private void addAMemtableIntoFlushingList(IMemTable tobeFlushed) throws IOException {
     Map<String, Long> lastTimeForEachDevice = new HashMap<>();
     if (sequence) {
-      lastTimeForEachDevice = tobeFlushed.getMaxTime();
+      // TODO:修改lastFlushTime的取法
+      lastTimeForEachDevice = tobeFlushed.getTopKTime();
+      // lastTimeForEachDevice = tobeFlushed.getMaxTime();
       // If some devices have been removed in MemTable, the number of device in MemTable and
       // tsFileResource will not be the same. And the endTime of these devices in resource will be
       // Long.minValue.
@@ -1029,7 +1052,20 @@ public class TsFileProcessor {
     if (enableMemControl) {
       SystemInfo.getInstance().addFlushingMemTableCost(tobeFlushed.getTVListsRamCost());
     }
-    flushingMemTables.addLast(tobeFlushed);
+    // TODO:如果是顺序区并且k>0,拆分之后分别进入不同的waitinglist中，否则的话仍然按照原方式刷盘
+    if (!sequence || WAITING_SIZE == 0) {
+      endtime = System.nanoTime();
+      flushingMemTables.addLast(tobeFlushed);
+      workMemTable = null;
+    } else {
+      try {
+        createNewWorkingMemTable(tobeFlushed);
+      } catch (WriteProcessException e) {
+          throw new RuntimeException(e);
+      }
+      flushingMemTables.addLast(tobeFlushed);
+    }
+
     if (logger.isDebugEnabled()) {
       logger.debug(
           "{}: {} Memtable (signal = {}) is added into the flushing Memtable, queue size = {}",
@@ -1042,7 +1078,6 @@ public class TsFileProcessor {
     if (!(tobeFlushed.isSignalMemTable() || tobeFlushed.isEmpty())) {
       totalMemTableSize += tobeFlushed.memSize();
     }
-    workMemTable = null;
     FlushManager.getInstance().registerTsFileProcessor(this);
   }
 

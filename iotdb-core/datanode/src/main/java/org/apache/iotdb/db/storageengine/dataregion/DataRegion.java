@@ -181,6 +181,7 @@ public class DataRegion implements IDataRegionForQuery {
   private static final Logger logger = LoggerFactory.getLogger(DataRegion.class);
 
   private final boolean enableMemControl = config.isEnableMemControl();
+  private final int waitingSize = config.getSeqMemtableTopKSize();
   /**
    * a read write lock for guaranteeing concurrent safety when accessing all fields in this class
    * (i.e., schema, (un)sequenceFileList, work(un)SequenceTsFileProcessor,
