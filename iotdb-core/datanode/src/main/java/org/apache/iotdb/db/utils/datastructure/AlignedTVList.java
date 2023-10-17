@@ -769,6 +769,8 @@ public abstract class AlignedTVList extends TVList {
         checkExpansion();
       }
     }
+    sort(Math.max(0,  start - MEMTABLE_TOPK_SIZE), end);
+    topKTime = Math.max(topKTime, getTime( Math.max(0,  end - MEMTABLE_TOPK_SIZE)));
   }
 
   private void arrayCopy(Object[] value, int idx, int arrayIndex, int elementIndex, int remaining) {
