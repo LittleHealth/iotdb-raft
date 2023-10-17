@@ -55,7 +55,6 @@ public abstract class TVList implements WALEntryValue {
   // index relation: arrayIndex -> elementIndex
   protected List<long[]> timestamps;
   protected int rowCount;
-  protected int memtableTopKSize;
 
   protected boolean sorted = true;
   protected long maxTime;

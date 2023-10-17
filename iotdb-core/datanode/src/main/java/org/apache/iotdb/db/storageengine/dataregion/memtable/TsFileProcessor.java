@@ -91,6 +91,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import static org.apache.iotdb.db.queryengine.metric.QueryExecutionMetricSet.GET_QUERY_RESOURCE_FROM_MEM;
 import static org.apache.iotdb.db.queryengine.metric.QueryResourceMetricSet.FLUSHING_MEMTABLE;
 import static org.apache.iotdb.db.queryengine.metric.QueryResourceMetricSet.WORKING_MEMTABLE;
+import static org.apache.iotdb.db.storageengine.rescon.memory.PrimitiveArrayManager.MEMTABLE_TOPK_SIZE;
 
 @SuppressWarnings("java:S1135") // ignore todos
 public class TsFileProcessor {
@@ -106,8 +107,6 @@ public class TsFileProcessor {
 
   /** whether it's enable mem control. */
   private final boolean enableMemControl = config.isEnableMemControl();
-
-  private final int WAITING_SIZE = config.getSeqMemtableTopKSize();
 
   /** database info for mem control. */
   private final DataRegionInfo dataRegionInfo;
@@ -322,7 +321,7 @@ public class TsFileProcessor {
   }
 
   private void createNewWorkingMemTable(IMemTable tobeFlushed) throws WriteProcessException {
-    if (WAITING_SIZE != 0) {
+    if (MEMTABLE_TOPK_SIZE != 0) {
       workMemTable = tobeFlushed.divide();
       walNode.onMemTableCreated(workMemTable, tsFileResource.getTsFilePath());
     } else {
@@ -1052,7 +1051,7 @@ public class TsFileProcessor {
       SystemInfo.getInstance().addFlushingMemTableCost(tobeFlushed.getTVListsRamCost());
     }
     // TODO:如果是顺序区并且k>0,拆分之后分别进入不同的waitinglist中，否则的话仍然按照原方式刷盘
-    if (!sequence || WAITING_SIZE == 0) {
+    if (!sequence || MEMTABLE_TOPK_SIZE == 0) {
       endtime = System.nanoTime();
       flushingMemTables.addLast(tobeFlushed);
       workMemTable = null;

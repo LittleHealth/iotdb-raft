@@ -644,10 +644,10 @@ public abstract class AlignedTVList extends TVList {
 
   @Override
   public TVList divide() {
-    assert rowCount > memtableTopKSize;
-    assert memtableTopKSize >= MEMTABLE_TOPK_SIZE;
+    assert rowCount > MEMTABLE_TOPK_SIZE;
+    assert MEMTABLE_TOPK_SIZE >= MEMTABLE_TOPK_SIZE;
     AlignedTVList topkTVList = AlignedTVList.newAlignedList(dataTypes);
-    int truncatedIndex = (rowCount - memtableTopKSize + ARRAY_SIZE - 1) / ARRAY_SIZE;
+    int truncatedIndex = (rowCount - MEMTABLE_TOPK_SIZE + ARRAY_SIZE - 1) / ARRAY_SIZE;
 
     for (int i = truncatedIndex + 1; i <= rowCount / ARRAY_SIZE; i++) {
       topkTVList.timestamps.add(timestamps.get(i));

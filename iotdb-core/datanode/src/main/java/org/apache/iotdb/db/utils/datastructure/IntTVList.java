@@ -76,7 +76,7 @@ public abstract class IntTVList extends TVList {
   @Override
   public void putInt(long timestamp, int value) {
     checkExpansion();
-    if (memtableTopKSize == 0) {
+    if (MEMTABLE_TOPK_SIZE == 0) {
       int arrayIndex = rowCount / ARRAY_SIZE;
       int elementIndex = rowCount % ARRAY_SIZE;
       maxTime = Math.max(maxTime, timestamp);
@@ -89,7 +89,7 @@ public abstract class IntTVList extends TVList {
     } else {
       int arrayIndex;
       int elementIndex;
-      int waitlen = Math.min(rowCount, memtableTopKSize);
+      int waitlen = Math.min(rowCount, MEMTABLE_TOPK_SIZE);
       int tempRowCount = rowCount - 1; // 记录向前比较的截止位置
       while (waitlen > 0) {
         waitlen--;
@@ -119,9 +119,9 @@ public abstract class IntTVList extends TVList {
       maxTime = Math.max(maxTime, timestamp);
       timestamps.get(arrayIndex)[elementIndex] = timestamp;
       values.get(arrayIndex)[elementIndex] = value;
-      if (rowCount > memtableTopKSize) {
-        arrayIndex = (rowCount - memtableTopKSize - 1) / ARRAY_SIZE;
-        elementIndex = (rowCount - memtableTopKSize - 1) % ARRAY_SIZE;
+      if (rowCount > MEMTABLE_TOPK_SIZE) {
+        arrayIndex = (rowCount - MEMTABLE_TOPK_SIZE - 1) / ARRAY_SIZE;
+        elementIndex = (rowCount - MEMTABLE_TOPK_SIZE - 1) % ARRAY_SIZE;
         topKTime = Math.max(topKTime, timestamps.get(arrayIndex)[elementIndex]);
       }
       rowCount++;
@@ -168,10 +168,10 @@ public abstract class IntTVList extends TVList {
 
   @Override
   public TVList divide() {
-    assert rowCount > memtableTopKSize;
-    assert memtableTopKSize >= MEMTABLE_TOPK_SIZE;
+    assert rowCount > MEMTABLE_TOPK_SIZE;
+    assert MEMTABLE_TOPK_SIZE >= ARRAY_SIZE;
     IntTVList topkTVList = IntTVList.newList();
-    int truncatedIndex = (rowCount - memtableTopKSize + ARRAY_SIZE - 1) / ARRAY_SIZE;
+    int truncatedIndex = (rowCount - MEMTABLE_TOPK_SIZE + ARRAY_SIZE - 1) / ARRAY_SIZE;
     for (int i = truncatedIndex + 1; i <= rowCount / ARRAY_SIZE; i++) {
       topkTVList.timestamps.add(timestamps.get(i));
       topkTVList.values.add(values.get(i));
@@ -263,6 +263,9 @@ public abstract class IntTVList extends TVList {
         checkExpansion();
       }
     }
+
+    sort(Math.max(0,  start - MEMTABLE_TOPK_SIZE), end);
+    topKTime = Math.max(topKTime, getTime( Math.max(0,  end - MEMTABLE_TOPK_SIZE)));
   }
 
   // move null values to the end of time array and value array, then return number of null values
