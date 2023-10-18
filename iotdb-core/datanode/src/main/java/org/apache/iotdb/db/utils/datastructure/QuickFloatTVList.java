@@ -43,6 +43,7 @@ public class QuickFloatTVList extends FloatTVList implements QuickSort {
     }
     sorted = true;
   }
+
   @Override
   public void sort(int lo, int hi) {
     qSort(lo, hi);

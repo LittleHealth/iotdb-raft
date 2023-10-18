@@ -2482,6 +2482,10 @@ public class IoTDBConfig {
   public int getPrimitiveArraySize() {
     return primitiveArraySize;
   }
+  public int getSeqMemtableTopKSize() {
+    return ;
+  }
+
 
   public void setPrimitiveArraySize(int primitiveArraySize) {
     this.primitiveArraySize = primitiveArraySize;

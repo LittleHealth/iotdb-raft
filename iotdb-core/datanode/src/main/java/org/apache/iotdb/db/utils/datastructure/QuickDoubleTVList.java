@@ -48,6 +48,7 @@ public class QuickDoubleTVList extends DoubleTVList implements QuickSort {
   public void sort(int lo, int hi) {
     qSort(lo, hi);
   }
+
   @Override
   protected void set(int src, int dest) {
     long srcT = getTime(src);

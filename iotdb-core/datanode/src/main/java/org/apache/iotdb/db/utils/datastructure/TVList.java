@@ -136,6 +136,14 @@ public abstract class TVList implements WALEntryValue {
     return timestamps.get(arrayIndex)[elementIndex];
   }
 
+  public List<long[]> getTimes() {
+    return timestamps;
+  }
+
+  public List<int[]> getTabletValues() {
+    throw new UnsupportedOperationException(ERR_DATATYPE_NOT_CONSISTENT);
+  }
+
   public void putLong(long time, long value) {
     throw new UnsupportedOperationException(ERR_DATATYPE_NOT_CONSISTENT);
   }

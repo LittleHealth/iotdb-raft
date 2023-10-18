@@ -27,6 +27,7 @@ import org.apache.iotdb.commons.service.metric.enums.Tag;
 import org.apache.iotdb.db.conf.IoTDBDescriptor;
 import org.apache.iotdb.db.exception.WriteProcessException;
 import org.apache.iotdb.db.exception.query.QueryProcessException;
+import org.apache.iotdb.db.queryengine.plan.planner.plan.node.PlanNodeId;
 import org.apache.iotdb.db.queryengine.plan.planner.plan.node.write.InsertRowNode;
 import org.apache.iotdb.db.queryengine.plan.planner.plan.node.write.InsertTabletNode;
 import org.apache.iotdb.db.schemaengine.schemaregion.utils.ResourceByPathUtils;
@@ -36,11 +37,14 @@ import org.apache.iotdb.db.storageengine.dataregion.modification.Modification;
 import org.apache.iotdb.db.storageengine.dataregion.wal.buffer.IWALByteBufferView;
 import org.apache.iotdb.db.storageengine.dataregion.wal.utils.WALWriteUtils;
 import org.apache.iotdb.db.utils.MemUtils;
+import org.apache.iotdb.db.utils.datastructure.TVList;
 import org.apache.iotdb.metrics.utils.MetricLevel;
 import org.apache.iotdb.tsfile.file.metadata.enums.TSDataType;
+import org.apache.iotdb.tsfile.utils.BitMap;
 import org.apache.iotdb.tsfile.utils.Pair;
 import org.apache.iotdb.tsfile.utils.ReadWriteIOUtils;
 import org.apache.iotdb.tsfile.write.schema.IMeasurementSchema;
+import org.apache.iotdb.tsfile.write.schema.MeasurementSchema;
 
 import java.io.DataInputStream;
 import java.io.IOException;
@@ -520,6 +524,65 @@ public abstract class AbstractMemTable implements IMemTable {
     memSize -= topkMemtable.memSize();
     totalPointsNum -= topkMemtable.getTotalPointsNum();
     return topkMemtable;
+  }
+
+  @Override
+  public List<InsertTabletNode> unInsertTablet() {
+    List<InsertTabletNode> unInsertRowNodeList = new ArrayList<>();
+    InsertTabletNode insertTabletNodeTemp;
+    IDeviceID deviceId;
+    List<IMeasurementSchema> schemaList;
+    IMeasurementSchema schema;
+    TVList tvlist;
+    for (IDeviceID key : memTableMap.keySet()) {
+      IWritableMemChunkGroup chunkGroupTemp = memTableMap.get(key);
+      for (String key2 : chunkGroupTemp.getMemChunkMap().keySet()) {
+        IWritableMemChunk chunkTemp = chunkGroupTemp.getMemChunkMap().get(key2);
+        schema = chunkTemp.getSchema();
+        tvlist = chunkTemp.getTVList();
+        long[] insertTimes = new long[tvlist.rowCount()];
+        int[] values = new int[tvlist.rowCount()];
+        int index = 0;
+        int nowlen = 0;
+        while (index < tvlist.getTimes().size()) {
+          int[] valuetemp = tvlist.getTabletValues().get(index);
+          for (int i = 0; i < Math.min(tvlist.rowCount() - nowlen, valuetemp.length); i++) {
+            values[nowlen + i] = (int) valuetemp[i];
+          }
+          // System.arraycopy(valuetemp, 0, values, nowlen, Math.min(tvlist.rowCount()-nowlen,
+          // tvlist.getTabletValues().get(index).length));
+          System.arraycopy(
+              tvlist.getTimes().get(index),
+              0,
+              insertTimes,
+              nowlen,
+              Math.min(tvlist.rowCount() - nowlen, tvlist.getTabletValues().get(index).length));
+          nowlen +=
+              Math.min(tvlist.rowCount() - nowlen, tvlist.getTabletValues().get(index).length);
+          index++;
+        }
+        Object[] tabletValues = new Object[1];
+        tabletValues[0] = values;
+        try {
+          insertTabletNodeTemp =
+              new InsertTabletNode(
+                  new PlanNodeId(""),
+                  new PartialPath(key.toStringID()), // 这里需要修改
+                  false,
+                  new String[] {schema.getMeasurementId()},
+                  new TSDataType[] {schema.getType()},
+                  new MeasurementSchema[] {(MeasurementSchema) schema},
+                  insertTimes,
+                  new BitMap[] {new BitMap(tvlist.rowCount())},
+                  tabletValues,
+                  tvlist.rowCount()); // we do not store plan node id in wal entry
+          unInsertRowNodeList.add(insertTabletNodeTemp);
+        } catch (IllegalPathException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    }
+    return unInsertRowNodeList;
   }
 
   @Override

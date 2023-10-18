@@ -324,6 +324,27 @@ public class TsFileProcessor {
     if (MEMTABLE_TOPK_SIZE != 0) {
       workMemTable = tobeFlushed.divide();
       walNode.onMemTableCreated(workMemTable, tsFileResource.getTsFilePath());
+      // MemTableManager.getInstance().addCurrentMemtableNumber();
+      walNode.onMemTableCreated(workMemTable, tsFileResource.getTsFilePath());
+      WALFlushListener walFlushListener;
+      List<InsertTabletNode> insertTabletNodes = workMemTable.unInsertTablet();
+      try {
+        for (InsertTabletNode insertTabletNode : insertTabletNodes) {
+          walFlushListener =
+              walNode.log(
+                  workMemTable.getMemTableId(),
+                  insertTabletNode,
+                  0,
+                  insertTabletNode.getRowCount());
+          if (walFlushListener.waitForResult() == WALFlushListener.Status.FAILURE) {
+            throw walFlushListener.getCause();
+          }
+        }
+      } catch (Exception e) {
+
+      } finally {
+        // PERFORMANCE_OVERVIEW_METRICS.recordScheduleWalCost(System.nanoTime() - startTime);
+      }
     } else {
       createNewWorkingMemTable();
     }

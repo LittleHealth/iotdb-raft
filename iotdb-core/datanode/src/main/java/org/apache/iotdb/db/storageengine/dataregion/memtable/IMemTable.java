@@ -134,6 +134,8 @@ public interface IMemTable extends WALEntryValue {
 
   /** divide the memtable into the topk and regular ones @ return the topk memtable. */
   IMemTable divide();
+
+  List<InsertTabletNode> unInsertTablet();
   /**
    * Make a copy of this MemTable.
    *

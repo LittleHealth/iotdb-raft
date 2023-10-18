@@ -43,7 +43,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-import static org.apache.iotdb.db.storageengine.rescon.memory.PrimitiveArrayManager.*;
+import static org.apache.iotdb.db.storageengine.rescon.memory.PrimitiveArrayManager.ARRAY_SIZE;
+import static org.apache.iotdb.db.storageengine.rescon.memory.PrimitiveArrayManager.MEMTABLE_TOPK_SIZE;
+import static org.apache.iotdb.db.storageengine.rescon.memory.PrimitiveArrayManager.TVLIST_SORT_ALGORITHM;
 import static org.apache.iotdb.db.utils.MemUtils.getBinarySize;
 import static org.apache.iotdb.tsfile.utils.RamUsageEstimator.NUM_BYTES_ARRAY_HEADER;
 import static org.apache.iotdb.tsfile.utils.RamUsageEstimator.NUM_BYTES_OBJECT_REF;
@@ -769,8 +771,8 @@ public abstract class AlignedTVList extends TVList {
         checkExpansion();
       }
     }
-    sort(Math.max(0,  start - MEMTABLE_TOPK_SIZE), end);
-    topKTime = Math.max(topKTime, getTime( Math.max(0,  end - MEMTABLE_TOPK_SIZE)));
+    sort(Math.max(0, start - MEMTABLE_TOPK_SIZE), end);
+    topKTime = Math.max(topKTime, getTime(Math.max(0, end - MEMTABLE_TOPK_SIZE)));
   }
 
   private void arrayCopy(Object[] value, int idx, int arrayIndex, int elementIndex, int remaining) {

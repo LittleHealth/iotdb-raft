@@ -34,7 +34,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.apache.iotdb.db.storageengine.rescon.memory.PrimitiveArrayManager.*;
+import static org.apache.iotdb.db.storageengine.rescon.memory.PrimitiveArrayManager.ARRAY_SIZE;
+import static org.apache.iotdb.db.storageengine.rescon.memory.PrimitiveArrayManager.MEMTABLE_TOPK_SIZE;
+import static org.apache.iotdb.db.storageengine.rescon.memory.PrimitiveArrayManager.TVLIST_SORT_ALGORITHM;
 
 public abstract class IntTVList extends TVList {
   // list of primitive array, add 1 when expanded -> int primitive array
@@ -139,6 +141,11 @@ public abstract class IntTVList extends TVList {
     int arrayIndex = index / ARRAY_SIZE;
     int elementIndex = index % ARRAY_SIZE;
     return values.get(arrayIndex)[elementIndex];
+  }
+
+  @Override
+  public List<int[]> getTabletValues() {
+    return values;
   }
 
   protected void set(int index, long timestamp, int value) {
@@ -264,8 +271,8 @@ public abstract class IntTVList extends TVList {
       }
     }
 
-    sort(Math.max(0,  start - MEMTABLE_TOPK_SIZE), end);
-    topKTime = Math.max(topKTime, getTime( Math.max(0,  end - MEMTABLE_TOPK_SIZE)));
+    sort(Math.max(0, start - MEMTABLE_TOPK_SIZE), end);
+    topKTime = Math.max(topKTime, getTime(Math.max(0, end - MEMTABLE_TOPK_SIZE)));
   }
 
   // move null values to the end of time array and value array, then return number of null values
